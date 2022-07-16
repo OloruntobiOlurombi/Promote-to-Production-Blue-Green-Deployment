@@ -1,26 +1,80 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
-jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
-    docker:
-      - image: cimg/base:stable
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+commands:
+  # Exercise - Rollback 
+  destroy_environment: 
     steps:
-      - checkout
-      - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+      - run: 
+          name: Destroy environment 
+          # ${CIRCLE_WORKFLOW_ID} is a Built-in environment variable 
+          # ${CIRCLE_WORKFLOW_ID:0:5} takes the first 5 chars of the variable CIRCLE_CI_WORKFLOW_ID
+          when: on_fail 
+          command: |
+            aws cloudformation delete-stack --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:7}
 
-# Invoke jobs via workflows
-# See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+jobs:
+  # create_infrastructure:
+    
+  #   docker:
+  #     - image: amazon/aws-cli
+   
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: "Create Cloudformation Stack"
+  #         command: | 
+  #           aws cloudformation deploy \
+  #               --template-file template.yml \
+  #               --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
+  #               --region us-east-1
+
+  create_infrastructure:
+    docker:
+      - image: amazon/aws-cli 
+    steps: 
+      - checkout 
+      - run:
+          name: Create Cloudformation Stack 
+          command: |
+            aws cloudformation deploy \
+             --template-file template.yml \
+             --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:7} \
+             --region us-east-1  
+      - run: return 1
+      - destroy_environment 
+           
+
+  # smoke_test: 
+  #   docker: 
+  #     - image: alpine:latest 
+  #   steps: 
+  #     - run: 
+  #         name: Test job 
+  #         # Fail the job intentionally to simulate an error.
+  #         command: return 1 
+  #     - destroy_environment                   
+
+  configure_infrastructure:
+    docker: 
+      - image: python:3.7-alpine3.16
+    steps:
+      - checkout 
+      - add_ssh_keys:
+          fingerprints: ["20:69:b6:ca:0c:c1:64:94:f6:5b:a6:0e:81:8b:f7:d1"] 
+      - run: 
+          name: Run Playbook and Configure server 
+          command: | 
+            # Install Ansible 
+            apk add --update ansible
+      - run: 
+          name: Run Playbook and Configure server 
+          command: |
+            ansible-playbook -i inventory main-remote.yml
+
+
+
 workflows:
-  say-hello-workflow:
+  my_workflow:
     jobs:
-      - say-hello
+      - create_infrastructure
+      # - smoke_test
