@@ -120,5 +120,69 @@ aws cloudformation deploy \
 > In the command above, replace ${S3_BUCKET_NAME} with the actual name of your bucket (e.g., mybucket644752792305). Also, note down the stack name - production-distro for the future. You will need the cloudfront.yml file in the automation steps later again.
 
 <img width="681" alt="Screen Shot 2022-07-20 at 5 55 15 PM" src="https://user-images.githubusercontent.com/40290711/180286720-aaecf32e-8bb3-4c86-bef7-e9b3ccf28f28.png">
-> Execute the cloudfront.yml template file that will create a CloudFront distribution (CDN) based on the bucket name mentioned against PipelineID parameter
 
+> Execute the cloudfront.yml template file that will create a CloudFront distribution (CDN) based on the bucket name mentioned against PipelineID parameter.
+
+##### Step 3: Cloudformation template to create a new S3 bucket
+
+> Create another Cloudformation template named ***bucket.yml*** that will create a new bucket and bucket policy. You can use the following template:
+
+```
+Parameters:
+# New Bucket name
+  MyBucketName:
+    Description: Existing Bucket name
+    Type: String
+Resources:
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${MyBucketName}"
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: error.html
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref 'WebsiteBucket'
+      PolicyDocument:
+        Statement:
+        - Sid: PublicReadForGetBucketObjects
+          Effect: Allow
+          Principal: '*'
+          Action: s3:GetObject
+          Resource: !Join ['', ['arn:aws:s3:::', !Ref 'WebsiteBucket', /*]]
+          
+```
+
+##### Step 4. Update the CircleCI Config file
+
+- ***Job*** - Write a job named create_and_deploy_front_end that executes the bucket.yml template to:
+
+> Create a new S3 bucket and
+
+> Copy the contents of the current repo (production files) to the new bucket.
+
+- Your job should look like this:
+
+```
+# Executes the bucket.yml - Deploy an S3 bucket, and interface with that bucket to synchronize the files between local and the bucket.
+# Note that the `--parameter-overrides` let you specify a value that override parameter value in the bucket.yml template file.
+create_and_deploy_front_end:
+docker:
+ - image: amazon/aws-cli
+steps:
+ - checkout
+ - run:
+     name: Execute bucket.yml - Create Cloudformation Stack
+     command: |
+       aws cloudformation deploy \
+       --template-file bucket.yml \
+       --stack-name stack-create-bucket-${CIRCLE_WORKFLOW_ID:0:7} \
+       --parameter-overrides MyBucketName="mybucket-${CIRCLE_WORKFLOW_ID:0:7}"
+ # Uncomment the step below if yoou wish to upload all contents of the current directory to the S3 bucket
+  - run: aws s3 sync . s3://mybucket-${CIRCLE_WORKFLOW_ID:0:7} --delete
+  ```
+
+Your job should look like this:
