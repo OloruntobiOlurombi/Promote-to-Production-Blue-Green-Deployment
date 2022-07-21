@@ -19,7 +19,7 @@
 
 ##### Let The Fun Begins!!!
 
-### STESPS
+### STEPS
 
 ##### Step 1: Create an S3 bucket (Manually)
 
@@ -38,4 +38,10 @@
   </body>
 </html>
 ```
+
+> Upload the index.html page to your bucket. Follow these steps if you need help. Make sure you can browse to the home page.
+> Enable the Static website hosting in that bucket and set index.html as default page of the website. See the snapshot below.
+
+<img width="1141" alt="Screen Shot 2022-07-21 at 10 59 18 AM" src="https://user-images.githubusercontent.com/40290711/180282460-5d43afe4-a12b-495a-84f6-127c7ee1e870.png">
+
 
