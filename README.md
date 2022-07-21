@@ -9,8 +9,11 @@
 - You should have finished the previous project below:
 
 > Project: Remote Control Using Ansible,
+
 > Project: Infrastructure Creation,
+
 > Project: Config and Deployment, and
+
 > Project: Rollback
 
 #### Instructions
