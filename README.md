@@ -12,7 +12,7 @@
 
 > Project: Infrastructure Creation,
 
-> Project: Config and Deployment, and
+> Project: Infrastructure CD, and
 
 > Project: Rollback
 
