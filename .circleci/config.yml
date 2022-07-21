@@ -122,7 +122,7 @@ jobs:
       - checkout 
       - run: yum install -y tar gzip 
       - attach_workspace: 
-          at: `/  
+          at: ~/  
       - run: 
           name: Destroy the previous s3 bucket and CloudFormation stack.
           command: | 
