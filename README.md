@@ -8,7 +8,7 @@
 
 - You should have finished the previous project below:
 
-> Project: Remote Control Using Ansible,
+> Project: Remote Control Using Ansible-2,
 
 > Project: Infrastructure Creation,
 
